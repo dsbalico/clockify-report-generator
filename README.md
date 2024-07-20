@@ -50,17 +50,17 @@ Before you begin, ensure you have the following:
 
 2. Set up a virtual environment:
    ```bash
-   python -m venv venv
+   python -m venv virtualenv
    ```
 
 3. Activate the virtual environment:
    - Windows:
      ```bash
-     .\venv\Scripts\activate
+     .\virtualenv\Scripts\activate
      ```
    - macOS/Linux:
      ```bash
-     source venv/bin/activate
+     source virtualenv/bin/activate
      ```
 
 4. Install required packages:
@@ -142,29 +142,3 @@ Accomplishment Report [MMYYYY Week#N] - LastName, FirstName, MiddleInitial..xlsx
 - 🔌 **API Connection Issues**: Verify your API key and internet connection.
 - 🕰️ **Incorrect Time Data**: Ensure your Clockify workspace timezone settings are correct.
 - 📊 **Excel Template Errors**: Make sure `template.xlsx` is in the project root and follows the expected format.
-
-For more issues, please check the [Issues](https://github.com/your-username/clockify-report-generator/issues) section of the repository.
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature-branch-name`.
-3. Make your changes and commit them: `git commit -m 'Add some feature'`.
-4. Push to the branch: `git push origin feature-branch-name`.
-5. Submit a pull request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👏 Acknowledgements
-
-- 🕰️ [Clockify](https://clockify.me/) for providing the time tracking API.
-- 📊 [OpenPyXL](https://openpyxl.readthedocs.io/) for Excel file manipulation.
-- 👥 All contributors who have helped to improve this project.
-
----
-
-For more information or support, please [open an issue](https://github.com/your-username/clockify-report-generator/issues/new) or contact the maintainer.

@@ -14,12 +14,10 @@ from utils.data_processing import (
     get_week_number
 )
 
-# Initialize the logger
 logger = initialize_logger()
 config = Config()
 
 def write_to_excel(transformed_data, period_covered, user_name):
-    # Load the template
     file_path = 'template.xlsx'
     workbook = load_workbook(file_path)
 
@@ -30,9 +28,8 @@ def write_to_excel(transformed_data, period_covered, user_name):
     sheet["B3"] = period_covered
 
     start_row = 6
-    start_col = 1  # Column A
+    start_col = 1  
 
-    # Initialize variables to track the current position in the sheet
     current_row = start_row
     last_date = None  # To keep track of the previous date
 
@@ -43,11 +40,8 @@ def write_to_excel(transformed_data, period_covered, user_name):
         endTime = entry['endTime']
         duration = entry['duration']
 
-        # Check if the date has changed from the last one
         if date != last_date:
-            # If it's not the first date, update the starting row for the new date
             if last_date is not None:
-                # Reset the range for the new date
                 start_row += 8
                 current_row = start_row
             
@@ -56,14 +50,12 @@ def write_to_excel(transformed_data, period_covered, user_name):
             last_date = date
             date = ''  # Don't repeat the date if it's the same as the previous one
 
-        # Assign values to the respective cells
         sheet.cell(row=current_row, column=start_col, value=date)               # A column
         sheet.cell(row=current_row, column=start_col + 1, value=description)    # B column
         sheet.cell(row=current_row, column=start_col + 2, value=startTime)      # C column
         sheet.cell(row=current_row, column=start_col + 3, value=endTime)        # D column
         sheet.cell(row=current_row, column=start_col + 4, value=duration)       # E column
 
-        # Increment the row for the next entry
         current_row += 1
 
     filename = generate_filename(transformed_data, user_name)
@@ -77,7 +69,6 @@ def generate_filename(transformed_data, user_name):
     formatted_date = date_obj.strftime('%m%Y')
     week_number = get_week_number(date_obj)
 
-    # Extract the first name, last name, and middle initial
     names = user_name.split(' ')
 
     if len(names) == 2:
@@ -116,23 +107,30 @@ def main():
 
     logger.info(f"Generating WAR for Week: {Fore.CYAN}{args.week}{Style.RESET_ALL}")
     logger.info(f"Getting User Info...")
+    
     user = api_client.get_user_info()
+    
     logger.info(f"User ID: {Fore.CYAN}{user['id']}{Style.RESET_ALL} | User Name: {Fore.CYAN}{user['name']}{Style.RESET_ALL} | User Email: {Fore.CYAN}{user['email']}{Style.RESET_ALL}")
 
     logger.info(f"Getting Workspaces...")
+    
     workspaces = api_client.get_workspaces()
     for workspace in workspaces:
         logger.info(f"Workspace ID: {Fore.CYAN}{workspace['id']}{Style.RESET_ALL} | Workspace Name: {Fore.CYAN}{workspace['name']}{Style.RESET_ALL}")
     
     logger.info(f"Fetching Time Entries...")
+
     time_entries = api_client.get_time_entries(args.week)
 
     logger.info(f"{Fore.MAGENTA}Processing Data...{Style.RESET_ALL}")
+
     period_covered = get_period_covered(time_entries)
     transformed_data = transform_data(time_entries)
-
+    
     logger.info(f"{Fore.MAGENTA}Writing to Excel...{Style.RESET_ALL}")
+
     write_to_excel(transformed_data, period_covered, user['name'])
+
     logger.info(f"============================== {Fore.GREEN}[DONE]{Style.RESET_ALL} =============================")
 
 if __name__ == '__main__':

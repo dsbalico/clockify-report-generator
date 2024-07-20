@@ -47,7 +47,7 @@ class ClockifyAPIClient:
         params = {'start': start, 'end': end}
 
         response = requests.get(url, headers=self.headers, params=params)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()  
         return response.json()
 
     def get_time_entries(self, week_choice = 'current'):
