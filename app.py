@@ -134,4 +134,7 @@ def main():
     logger.info(f"============================== {Fore.GREEN}[DONE]{Style.RESET_ALL} =============================")
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        logger.exception("An error occurred while running the script.")

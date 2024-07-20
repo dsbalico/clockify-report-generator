@@ -66,6 +66,7 @@ Before you begin, ensure you have the following:
    TIMEZONE=Asia/Manila
    ```
    Replace the values with your actual Clockify details.
+3. Leave the `USER_ID` & `WORKSPACE_ID` empty to get your user ID & workspace ID using your API key
 
 ## 🖥️ Usage
 
