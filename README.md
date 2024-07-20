@@ -2,21 +2,6 @@
 
 ![Clockify Logo](https://clockify.me/assets/images/clockify-logo.png)
 
-## 📑 Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Output](#output)
-- [Customization](#customization)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
-
 ## 🌟 Overview
 
 The Clockify Report Generator is a powerful Python-based tool designed to streamline the process of creating weekly accomplishment reports from Clockify time entries. By leveraging the Clockify API, this application fetches time data, processes it, and generates a professional Excel report based on a customizable template.
