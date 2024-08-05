@@ -41,18 +41,22 @@ def transform_data(time_entries):
         
         # Calculate duration in hours
         duration_str = entry['timeInterval']['duration']
-        duration_hours, duration_minutes = 0, 0
-        
-        # Extract hours and minutes from the duration string
+        duration_hours = 0
+        duration_minutes = 0
+        duration_seconds = 0
+
+        # Extract hours, minutes, and seconds from the duration string
         if 'H' in duration_str:
             duration_hours = int(duration_str.split('H')[0].replace('PT', ''))
-            if 'M' in duration_str:
-                duration_minutes = int(duration_str.split('H')[1].replace('M', ''))
-        elif 'M' in duration_str:
-            duration_minutes = int(duration_str.replace('PT', '').replace('M', ''))
-        
-        # Convert minutes to hours
-        duration_hours += duration_minutes / 60
+            duration_str = duration_str.split('H')[1]
+        if 'M' in duration_str:
+            duration_minutes = int(duration_str.split('M')[0].replace('PT', ''))
+            duration_str = duration_str.split('M')[1] if 'M' in duration_str else ''
+        if 'S' in duration_str:
+            duration_seconds = int(duration_str.replace('PT', '').replace('S', ''))
+
+        # Convert everything to hours
+        duration_total_hours = duration_hours + duration_minutes / 60 + duration_seconds / 3600
         
         # Format date to mm/dd/yyyy
         date_str = start_time_pht.strftime('%m/%d/%Y')
@@ -67,7 +71,7 @@ def transform_data(time_entries):
             'description': entry['description'],
             'startTime': start_time_formatted,
             'endTime': end_time_formatted,
-            'duration': duration_hours
+            'duration': duration_total_hours
         })
         
     formatted_data.reverse()
