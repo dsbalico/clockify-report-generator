@@ -74,7 +74,7 @@ def generate_filename(transformed_data, user_name):
     if len(names) == 2:
         first_name = names[0]
         last_name = names[1]
-        middle_initial = ''
+        middle_initial = 'T'
     elif len(names) == 3:
         first_name = names[0]
         middle_initial = names[1][0]
@@ -98,29 +98,47 @@ def generate_filename(transformed_data, user_name):
 
 def main():
     parser = argparse.ArgumentParser(description='Process some command-line arguments.')
-    parser.add_argument('--week', type=str, help='The week number to generate the report for.')
+    parser.add_argument('--week', type=str, help='The week number or specific date to generate the report for.')
+    parser.add_argument('--start_date', type=str, help='The start date for the range (YYYY-MM-DD).')
+    parser.add_argument('--end_date', type=str, help='The end date for the range (YYYY-MM-DD).')
     args = parser.parse_args()
 
     logger.info(f"============== {Fore.GREEN}[Starting Clockify Report Generator]{Style.RESET_ALL} ==============")
-    
+
     api_client = ClockifyAPIClient(config.API_KEY, config.BASE_URL, config.WORKSPACE_ID, config.USER_ID)
 
-    logger.info(f"Generating WAR for Week: {Fore.CYAN}{args.week}{Style.RESET_ALL}")
+    if args.start_date and args.end_date:
+        logger.info(f"Generating report for date range: {Fore.CYAN}{args.start_date} to {args.end_date}{Style.RESET_ALL}")
+        try:
+            start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
+            end_date = datetime.strptime(args.end_date, '%Y-%m-%d')
+        except ValueError:
+            logger.error("Invalid date format. Please use YYYY-MM-DD.")
+            return
+        time_entries = api_client.get_time_entries_by_date_range(start_date, end_date)
+    elif args.week:
+        try:
+            input_date = datetime.strptime(args.week, '%Y-%m-%d')
+            logger.info(f"Generating report for date: {Fore.CYAN}{input_date.strftime('%Y-%m-%d')}{Style.RESET_ALL}")
+            time_entries = api_client.get_time_entries_by_date(input_date)
+        except ValueError:
+            logger.info(f"Generating WAR for Week: {Fore.CYAN}{args.week}{Style.RESET_ALL}")
+            time_entries = api_client.get_time_entries(args.week)
+    else:
+        logger.error("Please provide either a week option or a date range.")
+        return
+
+    # Process and write data as before
     logger.info(f"Getting User Info...")
-    
     user = api_client.get_user_info()
-    
     logger.info(f"User ID: {Fore.CYAN}{user['id']}{Style.RESET_ALL} | User Name: {Fore.CYAN}{user['name']}{Style.RESET_ALL} | User Email: {Fore.CYAN}{user['email']}{Style.RESET_ALL}")
 
     logger.info(f"Getting Workspaces...")
-    
     workspaces = api_client.get_workspaces()
     for workspace in workspaces:
         logger.info(f"Workspace ID: {Fore.CYAN}{workspace['id']}{Style.RESET_ALL} | Workspace Name: {Fore.CYAN}{workspace['name']}{Style.RESET_ALL}")
-    
-    logger.info(f"Fetching Time Entries...")
 
-    time_entries = api_client.get_time_entries(args.week)
+    logger.info(f"Fetching Time Entries...")
 
     logger.info(f"{Fore.MAGENTA}Processing Data...{Style.RESET_ALL}")
 
