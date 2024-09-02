@@ -74,7 +74,7 @@ def generate_filename(transformed_data, user_name):
     if len(names) == 2:
         first_name = names[0]
         last_name = names[1]
-        middle_initial = 'T'
+        middle_initial = ''
     elif len(names) == 3:
         first_name = names[0]
         middle_initial = names[1][0]
