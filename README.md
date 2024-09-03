@@ -77,8 +77,12 @@ Run the script with the following command:
 ```bash
 python app.py --week [current|previous]
 ```
-
 Replace `[current|previous]` with your desired option.
+
+Or using specified dates with start and end date range
+```bash
+python app.py --start_date 2024-08-12 --end_date 2024-08-16
+```
 
 ### Using the Batch Script (Windows)
 

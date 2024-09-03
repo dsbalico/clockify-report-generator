@@ -55,3 +55,15 @@ class ClockifyAPIClient:
             return self._fetch_time_entries(week_choice)
         except requests.exceptions.RequestException as e:
             print(f'Failed to retrieve time entries: {e}')
+
+    def get_time_entries_by_date_range(self, start_date, end_date):
+        start_date_str = start_date.strftime('%Y-%m-%dT00:00:00Z')
+        end_date_str = end_date.strftime('%Y-%m-%dT23:59:59Z')
+
+        url = f'{self.base_url}/workspaces/{self.workspace_id}/user/{self.user_id}/time-entries?start={start_date_str}&end={end_date_str}'
+        response = requests.get(url, headers=self.headers)
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch time entries: {response.status_code}, {response.text}")
+
+        return response.json()
