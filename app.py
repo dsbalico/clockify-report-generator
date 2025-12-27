@@ -13,9 +13,34 @@ from utils.data_processing import (
     transform_data,
     get_week_number
 )
+import os
+import calendar
+from datetime import date, timedelta
 
 logger = initialize_logger()
 config = Config()
+
+def iter_week_ranges_for_month(year: int, month: int):
+    """
+    Yields (start_date, end_date) as date objects for each week (Mon-Sun),
+    clipped to the given month.
+    """
+    first_day = date(year, month, 1)
+    last_day = date(year, month, calendar.monthrange(year, month)[1])
+
+    # Move back to Monday of the week containing first_day
+    start = first_day - timedelta(days=first_day.weekday())
+
+    while start <= last_day:
+        end = start + timedelta(days=6)
+
+        # Clip to month bounds
+        clipped_start = max(start, first_day)
+        clipped_end = min(end, last_day)
+
+        yield clipped_start, clipped_end
+        start = start + timedelta(days=7)
+
 
 def write_to_excel(transformed_data, period_covered, user_name):
     file_path = 'template.xlsx'
@@ -101,12 +126,60 @@ def main():
     parser.add_argument('--week', type=str, help='The week number or specific date to generate the report for.')
     parser.add_argument('--start_date', type=str, help='The start date for the range (YYYY-MM-DD).')
     parser.add_argument('--end_date', type=str, help='The end date for the range (YYYY-MM-DD).')
+    parser.add_argument('--month', type=str, help='Month to generate all weekly reports for (YYYY-MM).')  # NEW
     args = parser.parse_args()
 
     logger.info(f"============== {Fore.GREEN}[Starting Clockify Report Generator]{Style.RESET_ALL} ==============")
 
     api_client = ClockifyAPIClient(config.API_KEY, config.BASE_URL, config.WORKSPACE_ID, config.USER_ID)
 
+    # Ensure output folder exists
+    os.makedirs("output", exist_ok=True)
+
+    logger.info(f"Getting User Info...")
+    user = api_client.get_user_info()
+    logger.info(
+        f"User ID: {Fore.CYAN}{user['id']}{Style.RESET_ALL} | "
+        f"User Name: {Fore.CYAN}{user['name']}{Style.RESET_ALL} | "
+        f"User Email: {Fore.CYAN}{user['email']}{Style.RESET_ALL}"
+    )
+
+    # MONTH MODE (NEW)
+    if args.month:
+        try:
+            year_str, month_str = args.month.split("-")
+            year = int(year_str)
+            month = int(month_str)
+            if month < 1 or month > 12:
+                raise ValueError("Month must be 01-12.")
+        except Exception:
+            logger.error("Invalid month format. Use YYYY-MM (e.g. 2024-08).")
+            return
+
+        logger.info(f"Generating weekly reports for: {Fore.CYAN}{args.month}{Style.RESET_ALL}")
+
+        for i, (start_d, end_d) in enumerate(iter_week_ranges_for_month(year, month), start=1):
+            logger.info(f"{Fore.MAGENTA}Week {i}: {start_d} to {end_d}{Style.RESET_ALL}")
+
+            time_entries = api_client.get_time_entries_by_date_range(
+                datetime.combine(start_d, datetime.min.time()),
+                datetime.combine(end_d, datetime.min.time())
+            )
+
+            if not time_entries:
+                logger.info(f"Week {i}: No entries found. Skipping.")
+                continue
+
+            period_covered = get_period_covered(time_entries)
+            transformed_data = transform_data(time_entries)
+
+            logger.info(f"{Fore.MAGENTA}Writing to Excel...{Style.RESET_ALL}")
+            write_to_excel(transformed_data, period_covered, user['name'])
+
+        logger.info(f"============================== {Fore.GREEN}[DONE]{Style.RESET_ALL} =============================")
+        return
+
+    # EXISTING MODES
     if args.start_date and args.end_date:
         logger.info(f"Generating report for date range: {Fore.CYAN}{args.start_date} to {args.end_date}{Style.RESET_ALL}")
         try:
@@ -116,40 +189,29 @@ def main():
             logger.error("Invalid date format. Please use YYYY-MM-DD.")
             return
         time_entries = api_client.get_time_entries_by_date_range(start_date, end_date)
+
     elif args.week:
         try:
             input_date = datetime.strptime(args.week, '%Y-%m-%d')
             logger.info(f"Generating report for date: {Fore.CYAN}{input_date.strftime('%Y-%m-%d')}{Style.RESET_ALL}")
-            time_entries = api_client.get_time_entries_by_date(input_date)
+            time_entries = api_client.get_time_entries_by_date(input_date)  # (your existing func)
         except ValueError:
             logger.info(f"Generating WAR for Week: {Fore.CYAN}{args.week}{Style.RESET_ALL}")
             time_entries = api_client.get_time_entries(args.week)
+
     else:
-        logger.error("Please provide either a week option or a date range.")
+        logger.error("Please provide either a week option, a date range, or a month.")
         return
 
-    # Process and write data as before
-    logger.info(f"Getting User Info...")
-    user = api_client.get_user_info()
-    logger.info(f"User ID: {Fore.CYAN}{user['id']}{Style.RESET_ALL} | User Name: {Fore.CYAN}{user['name']}{Style.RESET_ALL} | User Email: {Fore.CYAN}{user['email']}{Style.RESET_ALL}")
-
-    logger.info(f"Getting Workspaces...")
-    workspaces = api_client.get_workspaces()
-    for workspace in workspaces:
-        logger.info(f"Workspace ID: {Fore.CYAN}{workspace['id']}{Style.RESET_ALL} | Workspace Name: {Fore.CYAN}{workspace['name']}{Style.RESET_ALL}")
-
-    logger.info(f"Fetching Time Entries...")
-
     logger.info(f"{Fore.MAGENTA}Processing Data...{Style.RESET_ALL}")
-
     period_covered = get_period_covered(time_entries)
     transformed_data = transform_data(time_entries)
-    
-    logger.info(f"{Fore.MAGENTA}Writing to Excel...{Style.RESET_ALL}")
 
+    logger.info(f"{Fore.MAGENTA}Writing to Excel...{Style.RESET_ALL}")
     write_to_excel(transformed_data, period_covered, user['name'])
 
     logger.info(f"============================== {Fore.GREEN}[DONE]{Style.RESET_ALL} =============================")
+
 
 if __name__ == '__main__':
     main()

@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 
 :: Clear the screen
 cls
@@ -9,49 +9,77 @@ echo ==========================================================================
 echo                           Week Selection Menu
 echo ==========================================================================
 echo.
-:: Prompt user to choose a week, enter a date, or a date range
-echo Choose the week, enter a specific date, or select a date range:
+echo Choose the week, enter a specific date, select a date range, or generate by month:
 echo.
 echo 1. Current
 echo 2. Previous
 echo 3. Enter a date
 echo 4. Enter a date range
+echo 5. Enter month and year (YYYY-MM) (auto weekly reports)
 echo.
 
 :: Get the user's choice
-choice /c 1234 /m "Enter your choice:"
+choice /c 12345 /m "Enter your choice: "
+
+:: Capture immediately so errorlevel doesn't get overwritten
+set "sel=%errorlevel%"
 
 echo.
 echo ==========================================================================
 
-:: Set the week, date, or date range variable based on user's choice
-if %errorlevel%==1 (
-    set week=current
-) else if %errorlevel%==2 (
-    set week=previous
-) else if %errorlevel%==3 (
+:: Activate the virtual environment (adjust if your venv folder name is different)
+call ".\virtualenv\Scripts\activate.bat"
+
+:: Run based on selection
+if "%sel%"=="1" (
+    set "week=current"
+    echo You have selected !week!.
+    python app.py --week !week!
+) else if "%sel%"=="2" (
+    set "week=previous"
+    echo You have selected !week!.
+    python app.py --week !week!
+) else if "%sel%"=="3" (
+    set "week="
     set /p week="Enter the date (YYYY-MM-DD): "
-) else if %errorlevel%==4 (
+    if "!week!"=="" (
+        echo No date entered. Cancelled.
+        goto :done
+    )
+    echo You have selected !week!.
+    python app.py --week "!week!"
+) else if "%sel%"=="4" (
+    set "start_date="
+    set "end_date="
     set /p start_date="Enter the start date (YYYY-MM-DD): "
     set /p end_date="Enter the end date (YYYY-MM-DD): "
-)
-
-:: Provide feedback to the user
-echo.
-if %errorlevel%==4 (
-    echo You have selected the date range %start_date% to %end_date%.
-    python app.py --start_date %start_date% --end_date %end_date%
+    if "!start_date!"=="" (
+        echo No start date entered. Cancelled.
+        goto :done
+    )
+    if "!end_date!"=="" (
+        echo No end date entered. Cancelled.
+        goto :done
+    )
+    echo You have selected the date range !start_date! to !end_date!.
+    python app.py --start_date "!start_date!" --end_date "!end_date!"
+) else if "%sel%"=="5" (
+    set "month_ym="
+    set /p month_ym="Enter month (YYYY-MM): "
+    if "!month_ym!"=="" (
+        echo No month entered. Cancelled.
+        goto :done
+    )
+    echo Generating weekly reports for !month_ym!...
+    python app.py --month "!month_ym!"
 ) else (
-    echo You have selected %week%.
-    python app.py --week %week%
+    echo Invalid choice.
 )
 
+:done
 echo.
 echo ===========================================================================
 echo.
-
-:: Activate the virtual environment and run the Python script
-call ./env/scripts/activate
 
 :: Pause to allow the user to see the results
 pause
@@ -59,5 +87,9 @@ pause
 :: End the script
 endlocal
 
-:: sample call without bat:
+:: sample calls without bat:
+:: python app.py --week current
+:: python app.py --week previous
+:: python app.py --week 2024-08-12
 :: python app.py --start_date 2024-08-12 --end_date 2024-08-16
+:: python app.py --month 2025-06
